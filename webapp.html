@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pink Wordle</title>
+  <!-- Cursive font for that delicate vibe -->
+  <link href="https://fonts.googleapis.com/css2?family=Parisienne&display=swap" rel="stylesheet">
+  <style>
+    /* pastel pink background with tiny rose-pattern overlay */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #ffeef8;
+      background-image: url('https://i.imgur.com/9r4KXzO.png'); /* tiny rose repeat */
+      background-size: 40px 40px;
+      font-family: 'Parisienne', cursive;
+      color: #ea819d;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin: 1.5rem 0;
+      font-size: 3rem;
+      position: relative;
+    }
+    /* rose icons around title */
+    h1::before,
+    h1::after {
+      content: '🌹';
+      font-size: 1.5rem;
+      margin: 0 0.5rem;
+    }
+
+    #grid {
+      display: grid;
+      grid-gap: 5px;
+      margin-bottom: 1.5rem;
+    }
+
+    .tile {
+      width: 60px;
+      height: 60px;
+      border: 3px solid #f8c5d0;
+      border-radius: 8px;
+      font-family: 'Times New Roman', Times, serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      text-transform: uppercase;
+      background: #fff5f8;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background 0.3s, transform 0.2s;
+    }
+    .tile.correct   { background: #6aaa64; color: #fff; border-color: #6aaa64; }
+    .tile.present   { background: #c9b458; color: #fff; border-color: #c9b458; }
+    .tile.absent    { background: #787c7e; color: #fff; border-color: #787c7e; }
+
+    #controls {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    #guess {
+      width: 150px;
+      padding: 0.6rem;
+      font-size: 1rem;
+      border: 2px solid #f8c5d0;
+      border-radius: 6px;
+      text-transform: uppercase;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    #submit {
+      padding: 0.6rem 2rem;
+      font-size: 1rem;
+      background: #f8c5d0;
+      border: 2px solid #f8c5d0;
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    /* bows positioned away from text */
+    #submit::before,
+    #submit::after {
+      content: '🎀';
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.2rem;
+    }
+    #submit::before { left: 0.6rem; }
+    #submit::after  { right: 0.6rem; }
+    #submit:disabled {
+      background: #e0c8d8;
+      border-color: #e0c8d8;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    #playagain {
+      display: none;
+      margin-top: 1rem;
+      padding: 0.6rem 2rem;
+      font-size: 1rem;
+      background: #d6336c;
+      border: none;
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #playagain:hover {
+      background: #b12e58;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Pink Wordle</h1>
+  <p >A pink themed wordle game. Guess words that are pink!</p>
+  <div id="grid"></div>
+
+  <div id="controls">
+    <input id="guess" type="text" maxlength="5" autocomplete="off" autofocus placeholder="Guess" />
+    <button id="submit">Guess</button>
+  </div>
+
+  <button id="playagain">Play Again</button>
+
+  <script>
+    const WORDS = [
+      'PEONY', 'ROSES', 'TULIP', 'BLUSH', 'CANDY',
+      'DRESS','HEART','BACON','CLOUD','SHIRT'
+    ];
+    const answer = WORDS[Math.floor(Math.random() * WORDS.length)];
+    const WORDLEN = answer.length;
+    const MAXROWS = 6;
+
+    const gridEl = document.getElementById('grid');
+    gridEl.style.gridTemplateColumns = `repeat(${WORDLEN}, 60px)`;
+    for (let i = 0; i < MAXROWS * WORDLEN; i++) {
+      let tile = document.createElement('div');
+      tile.className = 'tile';
+      gridEl.appendChild(tile);
+    }
+
+    let currentRow = 0;
+    const guessInput = document.getElementById('guess');
+    const submitBtn = document.getElementById('submit');
+    const playAgainBtn = document.getElementById('playagain');
+
+    function endGame(message) {
+      setTimeout(() => alert(message), 100);
+      submitBtn.disabled = true;
+      playAgainBtn.style.display = 'inline-block';
+    }
+
+    function handleGuess() {
+      const guess = guessInput.value.toUpperCase();
+      if (guess.length !== WORDLEN) {
+        alert(`Please enter a ${WORDLEN}-letter word.`);
+        return;
+      }
+      if (currentRow >= MAXROWS) return;
+
+      for (let i = 0; i < WORDLEN; i++) {
+        const tile = gridEl.children[currentRow * WORDLEN + i];
+        tile.textContent = guess[i];
+        if (guess[i] === answer[i]) tile.classList.add('correct');
+        else if (answer.includes(guess[i])) tile.classList.add('present');
+        else tile.classList.add('absent');
+      }
+
+      currentRow++;
+      guessInput.value = '';
+      guessInput.focus();
+
+      if (guess === answer) endGame(`🎉 You got it! The word was ${answer}`);
+      else if (currentRow === MAXROWS) endGame(`Game over! The word was ${answer}`);
+    }
+
+    submitBtn.addEventListener('click', handleGuess);
+    guessInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleGuess(); });
+
+    playAgainBtn.addEventListener('click', () => location.reload());
+  </script>
+
+</body>
+</html>
